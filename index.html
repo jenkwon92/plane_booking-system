@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!--- 
+	Code Adapted from 
+     Hussein Nasser
+     https://github.com/hnasr/javascript_playground/tree/master/booking-system
+     https://www.youtube.com/watch?v=_95dCYv2Xv4
+	--->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="bulma.min.css">
+	<script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"> </script>
+    <title>Document</title>
+</head>
+<body>
+	<section class="section">
+    <div id="tbl" class="container box"></div>
+	</section>
+    <script>
+    
+    async function run () {
+        const tbl = document.getElementById("tbl")
+        const res = await fetch ("/seats");
+        const resarray = await res.json();
+        const j = resarray.sort((a,b) => a.id - b.id)
+        let tr;
+        for (let i = 0; i < j.length; i++) {
+            if (i % 4 === 0) {
+                tr = document.createElement("div");
+				tr.className = "columns is-mobile";
+			}
+            
+            const td = document.createElement("div");
+			td.className = "column is-one-quarter";
+            td.title = j[i].name
+			const p = document.createElement("p");
+			//p.className = "notification is-primary";
+            p.className = j[i].isbooked ? "notification is-danger" : "notification is-success";
+
+            p.textContent = j[i].description + ": " + j[i].name;
+			p.setAttribute("id", j[i].id);
+			
+            p.addEventListener("click", async e => {
+                try {
+                    const id = e.target.getAttribute("id");
+                    const name = prompt("Enter your name")
+                    const res = await fetch(`/${id}/${name}`, {"method" : "GET"})
+                    const j = await res.json();
+                    if (j.error) 
+                        alert("FAILED! Couldn't book! already booked.")
+                    else
+                        alert ("Booked successfully!")
+                    
+                    e.target.className = "notification is-danger";
+                }
+                catch(ex ){
+                    alert("error booking "  + ex)
+                }
+    
+
+            } )
+			td.appendChild(p);
+            tr.appendChild(td);
+            tbl.appendChild(tr);
+        }
+          
+       
+    }
+    run();
+    </script>
+
+</body>
+</html>
