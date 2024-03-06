@@ -72,10 +72,11 @@ async function bookSeat(id, name, req, res) {
         name
     );
     //begin transaction
+    await conn.query("START TRANSACTION");
 
     //getting the row to make sure it is not booked
     const sql =
-      "SELECT plane_seat_id FROM plane_seat where plane_seat_id = :id and occupied_by IS NULL;";
+      "SELECT plane_seat_id FROM plane_seat where plane_seat_id = :id and occupied_by IS NULL FOR UPDATE;";
     let selectParams = {
       id: id,
     };
@@ -85,6 +86,7 @@ async function bookSeat(id, name, req, res) {
     if (result[0].length === 0) {
       res.send({ error: "Seat already booked" });
       //end transaction with a rollback
+      await conn.query("ROLLBACK");
       conn.release();
       return;
     }
@@ -100,12 +102,14 @@ async function bookSeat(id, name, req, res) {
     const updateResult = await conn.query(sqlU, updateParams);
 
     //end transaction (commit)
+    await conn.query("COMMIT");
     conn.release();
     //console.log("update result: ");
     //console.log(updateResult);
     res.send(updateResult);
   } catch (ex) {
     //end transaction - error (rollback)
+    await conn.query("ROLLBACK");
     if (conn != null) {
       conn.release();
     }
